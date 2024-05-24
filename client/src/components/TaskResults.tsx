@@ -120,11 +120,25 @@ interface ResultRowProps {
 
 function ResultRow({ group, style }: ResultRowProps) {
   const { dispatch } = useContext(TaskResultsContext);
+  const handleGroupBoxClick = () => {
+    dispatch({
+      type: "setGroupSelected",
+      groupId: group.id,
+      isSelected: !group.isSelected,
+    });
+  };
   const handleGroupCheckboxChange = (event: ChangeEvent<HTMLInputElement>) => {
     dispatch({
       type: "setGroupSelected",
       groupId: group.id,
       isSelected: event.target.checked,
+    });
+  };
+  const handleCardClick = (mediaItemId: string) => {
+    dispatch({
+      type: "setOriginalMediaItemId",
+      groupId: group.id,
+      mediaItemId,
     });
   };
   const handleSelectedOriginalChange = (
@@ -139,7 +153,7 @@ function ResultRow({ group, style }: ResultRowProps) {
 
   return (
     <Stack direction="row" spacing={2} sx={{ py: 2 }} style={style}>
-      <Box css={styles.valignMiddle}>
+      <Box css={styles.valignMiddle} onClick={handleGroupBoxClick}>
         {group.hasDuplicates ? (
           <Checkbox
             checked={group.isSelected}
@@ -156,6 +170,7 @@ function ResultRow({ group, style }: ResultRowProps) {
           {...{
             group,
             mediaItemId,
+            handleCardClick,
             handleSelectedOriginalChange,
           }}
         />
@@ -167,12 +182,14 @@ function ResultRow({ group, style }: ResultRowProps) {
 interface MediaItemCardProps {
   group: TaskResultsGroupType;
   mediaItemId: string;
+  handleCardClick: (mediaItemId: string) => void;
   handleSelectedOriginalChange: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
 function MediaItemCard({
   group,
   mediaItemId,
+  handleCardClick,
   handleSelectedOriginalChange,
 }: MediaItemCardProps) {
   const { results } = useContext(TaskResultsContext);
@@ -186,12 +203,14 @@ function MediaItemCard({
         width: 240,
         opacity: mediaItem.deletedAt ? 0.6 : 1,
       }}
+      onClick={() => handleCardClick(mediaItem.id)}
       key={mediaItem.id}
     >
       <CardActionArea
         href={mediaItem.productUrl}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={(event) => event.stopPropagation()}
       >
         <CardMedia
           component="img"
