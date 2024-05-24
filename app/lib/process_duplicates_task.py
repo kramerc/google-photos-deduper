@@ -121,15 +121,34 @@ class ProcessDuplicatesTask:
         for group_index, media_item_indices in enumerate(groups):
             group_media_items = [media_items[i] for i in media_item_indices]
 
-            group_dimensions = [
-                int(m["mediaMetadata"]["width"]) * int(m["mediaMetadata"]["height"])
-                for m in group_media_items
+            # Choose the media item with NEF or CR2 extension as the original
+            group_file_names = [
+                m["filename"] for m in group_media_items
             ]
+            index = None
+            for i, filename in enumerate(group_file_names):
+                if filename.lower().endswith(('.nef', '.cr2')):
+                    index = i
+                    break
 
+            # If no NEF or CR2, choose HEIC that is uppercase
+            if index is None:
+                for i, filename in enumerate(group_file_names):
+                    if filename.endswith('.HEIC') and filename.isupper():
+                        index = i
+                        break
+
+            # If none of the above, choose the media item with largest dimensions
             # Choose the media item with largest dimensions as the original
             #   (we don't get created/uploaded times from the AP).
-            largest = group_dimensions.index(max(group_dimensions))
-            original_media_item_id = group_media_items[largest]["id"]
+            if index is None:
+                group_dimensions = [
+                    int(m["mediaMetadata"]["width"]) * int(m["mediaMetadata"]["height"])
+                    for m in group_media_items
+                ]
+                index = group_dimensions.index(max(group_dimensions))
+
+            original_media_item_id = group_media_items[index]["id"]
 
             result["groups"].append(
                 {
